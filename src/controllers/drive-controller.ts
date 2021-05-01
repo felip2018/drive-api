@@ -10,6 +10,7 @@ class DriveController {
     public async getRootFolderData(rq: Request, rs: Response) {
         const auth = authenticationService.getOAuth2Client();
         const drive = google.drive({version: 'v3', auth});
+        console.log('[SERVICE] getRootFolderData');
         drive.files.list({
             fields:'files(id, name, parents)',
             q: "'root' in parents",

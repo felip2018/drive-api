@@ -86,7 +86,7 @@ class DriveController {
         const drive = google.drive({version: 'v3', auth});
 
         let form = new multiparty.Form();
-        form.parse(rq, (err, fields, files) => {
+        form.parse(rq, async (err, fields, files) => {
             if(err){ 
                 rs.json({
                     status: 400,
@@ -97,40 +97,18 @@ class DriveController {
 
             if(files.archivo) {
 
-                let archivosCargados: string[] = [];
-                let archivosErroneos: string[] = [];
-
-                const archivos = files.archivo;
-                archivos.map(async (file: any) => {
-                     
-                    //let res = await uploadFile(drive, file, fields.parentFolder[0]);
-                    
-                    //console.log(`Status:: ${res.status}, Data: ${JSON.stringify(res.data)}`);
-                    let media = {
-                        mimeType: file.headers["content-type"],
-                        body: fs.createReadStream(file.path)
-                    };
-
-                    const response = await drive.files.create({
-                        requestBody: {
-                            parents: [fields.parentFolder[0]],
-                            name: file.originalFilename,
-                            mimeType: media.mimeType,
-                        },
-                        media,
-                    });
-
-                    console.log(response.data);
+                const archivo = files.archivo;
                 
-                });
+                console.log('archivo', archivo);
+
+                const response = await uploadFile(drive, archivo[0], fields.parentFolder[0]);
+
+                // console.log('RESPONSE:: ', response);
 
                 rs.json({
-                    status: 200,
-                    message: 'Resultado de cargue archivos!',
-                    response: {
-                        success: archivosCargados,
-                        wrong: archivosErroneos
-                    }
+                    status: response.status,
+                    message: response.statusText,
+                    response: response.data
                 });
 
             } else {
@@ -177,11 +155,6 @@ class DriveController {
         }
     }
 
-    public async deleteFile(rq: Request, rs: Response) {
-        rs.json({
-            message: 'deleteFile'
-        });
-    }
 }
 
 const driveController = new DriveController();

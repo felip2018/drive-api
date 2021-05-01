@@ -15,10 +15,10 @@ function uploadFile(drive: any, file: any, parent: string): Promise<any> {
                 media: media,
                 fields: 'id, name',
             });
-            resolve(response);
+            return resolve(response);
         } catch (error) {
             console.log('[Error uploadFile]', error);
-            reject(error);
+            return reject(error);
         }    
     });
 }

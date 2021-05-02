@@ -1,0 +1,26 @@
+name: QA CI/CD
+
+on:
+  push:
+    branches: [qa]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Instala Node 14.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14.x'
+      
+    - name: Install Dependencies
+      run: |
+        npm install
+    
+    - name: Ejecutar Pruebas y Cobertura
+      run: |
+        npm run test
+        npm run coverage
+        npm run coverage:report 

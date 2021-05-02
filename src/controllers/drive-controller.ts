@@ -10,7 +10,7 @@ class DriveController {
     public async getRootFolderData(rq: Request, rs: Response) {
         const auth = authenticationService.getOAuth2Client();
         const drive = google.drive({version: 'v3', auth});
-        console.log('[SERVICE] getRootFolderData');
+
         drive.files.list({
             fields:'files(id, name, parents)',
             q: "'root' in parents",
@@ -34,9 +34,10 @@ class DriveController {
     public async getAllFiles(rq: Request, rs: Response) {
         const auth = authenticationService.getOAuth2Client();
         const drive = google.drive({version: 'v3', auth});
+        const parentFolder = rq.header('parent-folder');
         drive.files.list({
             fields: 'nextPageToken, files(id, name, mimeType, trashed, parents)',
-            q: `'${rq.body.parent}' in parents`
+            q: `'${parentFolder}' in parents`
         }, (err, resp) => {
             if (err) {
                 rs.json({
@@ -58,13 +59,14 @@ class DriveController {
     public async createFolder(rq: Request, rs: Response) {
         const auth = authenticationService.getOAuth2Client();
         const drive = google.drive({version: 'v3', auth});
-                
+        const parentFolder = rq.header('parent-folder');
+        const folderName = rq.header('folder-name');
         drive.files.create({
             fields: 'id',
             requestBody: {
-                name: rq.body.name,
+                name: folderName,
                 mimeType: 'application/vnd.google-apps.folder',
-                parents:[rq.body.parent]
+                parents:[parentFolder]
             }
         }).then((file) => {
             console.log('Folder Id: ', file.data.id);
@@ -85,6 +87,7 @@ class DriveController {
     public uploadFile(rq: Request, rs: Response) {
         const auth = authenticationService.getOAuth2Client();
         const drive = google.drive({version: 'v3', auth});
+        const parentFolder = rq.header('parent-folder');
 
         let form = new multiparty.Form();
         form.parse(rq, async (err, fields, files) => {
@@ -99,12 +102,7 @@ class DriveController {
             if(files.archivo) {
 
                 const archivo = files.archivo;
-                
-                console.log('archivo', archivo);
-
-                const response = await uploadFile(drive, archivo[0], fields.parentFolder[0]);
-
-                // console.log('RESPONSE:: ', response);
+                const response = await uploadFile(drive, archivo[0], parentFolder);
 
                 rs.json({
                     status: response.status,
@@ -120,10 +118,6 @@ class DriveController {
                 });
             }
 
-            /*Object.keys(files).forEach(function(name) {
-                console.log('got file named ' + name);
-            });*/
-
         });
     }
 
@@ -132,7 +126,7 @@ class DriveController {
         const drive = google.drive({version: 'v3', auth});
         
         try {
-            const fileId = rq.body.fileId;
+            const fileId = rq.header('file-id');;
             await drive.permissions.create({
                 fileId: fileId,
                 requestBody: {
@@ -145,8 +139,6 @@ class DriveController {
                 fileId: fileId,
                 fields: 'webViewLink, webContentLink'
             });
-    
-            console.log(result.data);
 
             rs.status(200).json(result.data).end();
     

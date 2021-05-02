@@ -9,11 +9,11 @@ class QueryRouter {
     }
 
     private config(): void {
-        this.router.get('/getRootData', driveController.getRootFolderData);
-        this.router.get('/getAllFiles', driveController.getAllFiles);
-        this.router.post('/createFolder', driveController.createFolder);
-        this.router.post('/uploadFile', driveController.uploadFile);
-        this.router.post('/downloadFile', driveController.downloadFile);
+        this.router.get('/get-root-data', driveController.getRootFolderData);
+        this.router.get('/get-all-files', driveController.getAllFiles);
+        this.router.post('/create-folder', driveController.createFolder);
+        this.router.post('/upload-file', driveController.uploadFile);
+        this.router.post('/download-file', driveController.downloadFile);
     }
 }
 

@@ -8,7 +8,7 @@ import fs from 'fs';
 class DriveController {
     
     public async getRootFolderData(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client();
+        const auth = authenticationService.getOAuth2Client(rq);
         const drive = google.drive({version: 'v3', auth});
 
         drive.files.list({
@@ -32,7 +32,7 @@ class DriveController {
     }
 
     public async getAllFiles(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client();
+        const auth = authenticationService.getOAuth2Client(rq);
         const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');
         drive.files.list({
@@ -57,7 +57,7 @@ class DriveController {
     }
 
     public async createFolder(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client();
+        const auth = authenticationService.getOAuth2Client(rq);
         const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');
         const folderName = rq.header('folder-name');
@@ -85,7 +85,7 @@ class DriveController {
     }
 
     public uploadFile(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client();
+        const auth = authenticationService.getOAuth2Client(rq);
         const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');
 
@@ -122,7 +122,7 @@ class DriveController {
     }
 
     public async downloadFile(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client();
+        const auth = authenticationService.getOAuth2Client(rq);
         const drive = google.drive({version: 'v3', auth});
         
         try {

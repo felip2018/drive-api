@@ -11,6 +11,7 @@ env:
   memory: 128
   handler: index.handler
   language: "javascript" #javascript, java, python
+  cache-name: nodejs-github-actions
 
 jobs:
   build:
@@ -23,8 +24,6 @@ jobs:
         node-version: 12.x
     - name: Restore cache
       uses: actions/cache@v2
-      env:
-        cache-name: nodejs-github-actions
       with:
         path: node_modules
         key: npm-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}

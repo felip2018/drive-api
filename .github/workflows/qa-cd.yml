@@ -4,7 +4,41 @@ on:
   push:
     branches: [qa]
 
+env:
+  project_name: "drive-api"
+  type: "lambda"
+  files_compress: "build src node_modules index.js package.json"
+  memory: 128
+  handler: index.handler
+  language: "javascript" #javascript, java, python
+
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+    - name: Restore cache
+      uses: actions/cache@v2
+      env:
+        cache-name: nodejs-github-actions
+      with:
+        path: node_modules
+        key: npm-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: npm-${{ env.cache-name }}
+   - name: Install Dependencies
+      run: |
+        npm install && npm run build
+    - name: Persist Data
+      uses: actions/upload-artifact@v2
+      with:
+        name: build
+        path:  |
+          build
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -32,11 +66,15 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: AWS Lambda Deploy
+      if: github.ref == 'refs/heads/qa'
       uses: appleboy/lambda-action@master
       with:
+        function_name: Drive-API-QA
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: us-east-1
-        function_name: Drive-API-QA
-        zip_file: drive-api.zip
-        dry_run: true
+        files-to-compress: ${{ env.files_compress }}
+        function-handler: ${{ env.handler }}
+        function-memory-size: ${{ env.memory }}
+        function-runtime: nodejs12.x
+        path-to-env-vars: pipeline/qa-env.json

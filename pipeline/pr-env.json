@@ -1,0 +1,10 @@
+{
+    "vars": {
+        "NODE_ENV": "PR",
+        "PORT": "3100",
+        "CLIENT_ID": "953108868015-o6gshtd1g20ffbnhc265tmfb31l19sgs.apps.googleusercontent.com",
+        "CLIENT_SECRET": "0yQXKn-KTdpNxUGhow-TvpBR",
+        "REDIRECT_URI": "https://developers.google.com/oauthplayground",
+        "REFRESH_TOKEN": "1//04ipkWEiLlkD1CgYIARAAGAQSNwF-L9IreWwrqcWI99YwnVeNacru5V0Y4msGl84JlZ0UtZjouZbTdGkMpbapInfpOJamKvere6s"
+    }
+}

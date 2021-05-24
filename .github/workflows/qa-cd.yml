@@ -7,9 +7,6 @@ on:
 env:
   project_name: "drive-api"
   type: "lambda"
-  files_compress: "build src node_modules index.js package.json"
-  memory: 128
-  handler: index.handler
   language: "javascript" #javascript, java, python
 
 jobs:
@@ -75,8 +72,8 @@ jobs:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: us-east-1
-        files-to-compress: ${{ env.files_compress }}
-        function-handler: ${{ env.handler }}
-        function-memory-size: ${{ env.memory }}
+        files-to-compress: "build src node_modules index.js package.json"
+        function-handler: index.handler
+        function-memory-size: 128
         function-runtime: nodejs12.x
         path-to-env-vars: pipeline/qa-env.json

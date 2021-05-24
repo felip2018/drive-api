@@ -1,5 +1,4 @@
 import http from 'http';
-import { debug } from 'node:console';
 import app from './app';
 
 let server: http.Server | undefined;

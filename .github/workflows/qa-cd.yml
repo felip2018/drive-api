@@ -22,12 +22,6 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 12.x
-    - name: Restore cache
-      uses: actions/cache@v2
-      with:
-        path: node_modules
-        key: npm-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: npm-${{ env.cache-name }}
    - name: Install Dependencies
       run: |
         npm install && npm run build

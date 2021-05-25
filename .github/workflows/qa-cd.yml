@@ -67,13 +67,9 @@ jobs:
     - name: AWS Lambda Deploy
       if: github.ref == 'refs/heads/qa'
       uses: appleboy/lambda-action@master
-      with:
-        function_name: Drive-API-QA
-        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY }}
-        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws_region: us-east-1
-        files-to-compress: "build src node_modules index.js package.json"
-        function-handler: index.handler
-        function-memory-size: 128
-        function-runtime: nodejs12.x
-        path-to-env-vars: pipeline/qa-env.json
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: ${{ secrets.AWS_REGION }}
+          function_name: gorush
+          source: lambda/index.js

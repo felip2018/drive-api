@@ -65,6 +65,7 @@ jobs:
     environment: qa
     steps:
     - uses: actions/checkout@v1
+
     - name: AWS Lambda Deploy
       if: github.ref == 'refs/heads/qa'
       uses: appleboy/lambda-action@master
@@ -73,9 +74,8 @@ jobs:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws_region: us-east-1
-        files-to-compress: ${{ env.files_compress }}
-        function-handler: ${{ env.handler }}
-        function-memory-size: ${{ env.memory }}
-        function-runtime: nodejs12.x
-        path-to-env-vars: pipeline/qa-env.json
+        handler: ${{ env.handler }}
+        memory_size: ${{ env.memory }}
+        runtime: nodejs12.x
+        environment: pipeline/qa-env.json
         dry_run: true

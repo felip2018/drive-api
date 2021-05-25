@@ -27,9 +27,9 @@ jobs:
         cache-name: nodejs-github-actions
       with:
         path: node_modules
-        key: npm-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+        key: npm-${{ env.cache-name }}
         restore-keys: npm-${{ env.cache-name }}
-   - name: Install Dependencies
+    - name: Install Dependencies
       run: |
         npm install && npm run build
     - name: Persist Data

@@ -3,7 +3,6 @@ import { google } from 'googleapis';
 import authenticationService from '../services/authentication';
 import {uploadFile} from '../services/drive';
 import multiparty from 'multiparty';
-import fs from 'fs';
 
 class DriveController {
     

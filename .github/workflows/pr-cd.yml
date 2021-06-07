@@ -1,0 +1,94 @@
+name: PR CI/CD
+
+on:
+  push:
+    branches: [master]
+
+env:
+  project_name: "drive-api"
+  type: "lambda"
+  files_compress: "build src node_modules index.js package.json"
+  memory: 128
+  handler: index.handler
+  language: "javascript" #javascript, java, python
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+    - name: Restore cache
+      uses: actions/cache@v2
+      env:
+        cache-name: nodejs-github-actions
+      with:
+        path: node_modules
+        key: npm-${{ env.cache-name }}
+        restore-keys: npm-${{ env.cache-name }}
+    - name: Install Dependencies
+      run: |
+        npm install && npm run build
+    - name: Persist Data
+      uses: actions/upload-artifact@v2
+      with:
+        name: build
+        path:  |
+          build
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Instala Node 14.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14.x'
+      
+    - name: Install Dependencies
+      run: |
+        npm install
+    
+    - name: Ejecutar Pruebas y Cobertura
+      run: |
+        npm run test
+        npm run coverage
+        npm run coverage:report 
+  
+  deploy:
+    name: build and deploy lambda
+    strategy:
+      matrix:
+        node-version: [14.x]
+    runs-on: ubuntu-latest
+    needs: test
+    environment: qa
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: npm install and build
+        run: |
+          npm i
+          npm run build --if-present
+        env:
+          CI: true
+      - name: zip
+        uses: montudor/action-zip@v0.1.0
+        with:
+          args: zip -qq -r ./bundle.zip ./build
+      - name: default deploy
+        uses: appleboy/lambda-action@master
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: us-east-1
+          function_name: google-drive-api-PR
+          zip_file: bundle.zip

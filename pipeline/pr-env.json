@@ -1,8 +1,0 @@
-{
-    "vars": {
-        "NODE_ENV": "PR",
-        "PORT": "3100",
-        "REGION": "us-east-1",
-        "SECRET_NAME": "GOOGLE_DRIVE_SECRETS_QA"
-    }
-}

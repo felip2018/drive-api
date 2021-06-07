@@ -95,4 +95,4 @@ jobs:
           memory_size: 128
           timeout: 60
           handler: build/index.handler
-          environment: REGION=us-east-1, SECRET_NAME=GOOGLE_DRIVE_SECRETS_PR
+          environment: REGION=us-east-1, SECRET_NAME=GOOGLE_DRIVE_SECRETS_QA

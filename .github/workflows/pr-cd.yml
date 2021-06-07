@@ -92,3 +92,7 @@ jobs:
           aws_region: us-east-1
           function_name: google-drive-api-PR
           zip_file: bundle.zip
+          memory_size: 128
+          timeout: 60
+          handler: build/index.handler
+          environment: REGION=us-east-1, SECRET_NAME=GOOGLE_DRIVE_SECRETS_PR

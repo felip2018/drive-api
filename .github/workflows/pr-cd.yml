@@ -1,8 +1,8 @@
-name: QA CI/CD
+name: PR CI/CD
 
 on:
   push:
-    branches: [qa]
+    branches: [master]
 
 env:
   project_name: "drive-api"
@@ -90,9 +90,9 @@ jobs:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws_region: us-east-1
-          function_name: google-drive-api-QA
+          function_name: google-drive-api-PR
           zip_file: bundle.zip
           memory_size: 128
           timeout: 60
           handler: build/index.handler
-          environment: REGION=us-east-1, SECRET_NAME=GOOGLE_DRIVE_SECRETS_QA
+          environment: REGION=us-east-1, SECRET_NAME=GOOGLE_DRIVE_SECRETS_PR

@@ -3,11 +3,16 @@ import { google } from 'googleapis';
 import authenticationService from '../services/authentication';
 import {uploadFile} from '../services/drive';
 import multiparty from 'multiparty';
+import secretsController from './secrets-controller';
 
 class DriveController {
     
     public async getRootFolderData(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client(rq);
+
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
         const drive = google.drive({version: 'v3', auth});
 
         drive.files.list({
@@ -31,7 +36,10 @@ class DriveController {
     }
 
     public async getAllFiles(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client(rq);
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
         const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');
         drive.files.list({
@@ -56,7 +64,10 @@ class DriveController {
     }
 
     public async createFolder(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client(rq);
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
         const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');
         const folderName = rq.header('folder-name');
@@ -83,8 +94,11 @@ class DriveController {
         });
     }
 
-    public uploadFile(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client(rq);
+    public async uploadFile(rq: Request, rs: Response) {
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
         const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');
 
@@ -121,7 +135,10 @@ class DriveController {
     }
 
     public async downloadFile(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client(rq);
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
         const drive = google.drive({version: 'v3', auth});
         
         try {
@@ -146,7 +163,6 @@ class DriveController {
             rs.status(error.status).json(error).end();
         }
     }
-
 }
 
 const driveController = new DriveController();

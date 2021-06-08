@@ -1,17 +1,14 @@
 import { google } from 'googleapis';
-import { Request } from 'express';
-import { buildCredentialsObject } from '../utils/mapper-utils';
 
 class AuthenticationService {
-    public getOAuth2Client(request: Request) {
-        const credentials = buildCredentialsObject(request);
+    public getOAuth2Client(secrets: any) {
         const oauth2Client = new google.auth.OAuth2(
-            credentials.clientId,
-            credentials.clientSecret,
-            credentials.redirectUri
+            secrets.CLIENT_ID,
+            secrets.CLIENT_SECRET,
+            secrets.REDIRECT_URI
         );
         
-        oauth2Client.setCredentials({refresh_token: credentials.refreshToken});
+        oauth2Client.setCredentials({refresh_token: secrets.REFRESH_TOKEN});
 
         return oauth2Client;
     }

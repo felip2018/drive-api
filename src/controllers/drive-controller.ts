@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { google } from 'googleapis';
+import fs from 'fs';
 import authenticationService from '../services/authentication';
-import {uploadFile} from '../services/drive';
+import { getResumibleSession, uploadFileToResumibleSession } from '../services/drive';
 import multiparty from 'multiparty';
 import secretsController from './secrets-controller';
 
@@ -94,46 +95,6 @@ class DriveController {
         });
     }
 
-    public async uploadFile(rq: Request, rs: Response) {
-        const sec = await secretsController.getSecrets();
-        const secrets = JSON.parse(sec.SecretString);
-
-        const auth = authenticationService.getOAuth2Client(secrets);
-        const drive = google.drive({version: 'v3', auth});
-        const parentFolder = rq.header('parent-folder');
-
-        let form = new multiparty.Form();
-        form.parse(rq, async (err, fields, files) => {
-            if(err){ 
-                rs.json({
-                    status: 400,
-                    message: 'Ha ocurrido un error al cargar el archivo',
-                    response: err
-                }); 
-            }
-
-            if(files.archivo) {
-
-                const archivo = files.archivo;
-                const response = await uploadFile(drive, archivo[0], parentFolder);
-
-                rs.json({
-                    status: response.status,
-                    message: response.statusText,
-                    response: response.data
-                });
-
-            } else {
-                rs.json({
-                    status: 404,
-                    message: 'No hay archivos para subir a Drive!',
-                    response: err
-                });
-            }
-
-        });
-    }
-
     public async downloadFile(rq: Request, rs: Response) {
         const sec = await secretsController.getSecrets();
         const secrets = JSON.parse(sec.SecretString);
@@ -162,6 +123,35 @@ class DriveController {
             console.log(error.message);
             rs.status(error.status).json(error).end();
         }
+    }
+
+    public async uploadFileToDrive(rq: Request, rs: Response) {
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
+        const accessTokenObj = await auth.getAccessToken();
+        
+        const parentFolder = rq.header('parent-folder');
+
+        const form = new multiparty.Form();
+        form.parse(rq, async (err, fields, files) => {
+            if (err) {
+                return rs.status(409).json(err).end();
+            }
+
+            if (!files.archivo) {
+                return rs.status(204).json({message: 'Seleccione un archivo'}).end();
+            }
+
+            const file = files.archivo[0];
+
+            const response = await getResumibleSession(accessTokenObj.token, file, parentFolder);
+
+            const upload = await uploadFileToResumibleSession(response.location, accessTokenObj.token, file);
+
+        });
+
     }
 }
 

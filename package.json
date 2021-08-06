@@ -23,6 +23,7 @@
   "author": "Felipe Garzon",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.922.0",
     "aws-serverless-express": "^3.4.0",
     "axios": "^0.21.1",
     "cookie-parser": "^1.4.4",

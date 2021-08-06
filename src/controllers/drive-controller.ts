@@ -1,13 +1,19 @@
 import { Request, Response } from 'express';
 import { google } from 'googleapis';
+import fs from 'fs';
 import authenticationService from '../services/authentication';
-import {uploadFile} from '../services/drive';
+import { getResumibleSession, uploadFileToResumibleSession } from '../services/drive';
 import multiparty from 'multiparty';
+import secretsController from './secrets-controller';
 
 class DriveController {
     
     public async getRootFolderData(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client(rq);
+
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
         const drive = google.drive({version: 'v3', auth});
 
         drive.files.list({
@@ -31,7 +37,10 @@ class DriveController {
     }
 
     public async getAllFiles(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client(rq);
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
         const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');
         drive.files.list({
@@ -56,7 +65,10 @@ class DriveController {
     }
 
     public async createFolder(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client(rq);
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
         const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');
         const folderName = rq.header('folder-name');
@@ -83,45 +95,11 @@ class DriveController {
         });
     }
 
-    public uploadFile(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client(rq);
-        const drive = google.drive({version: 'v3', auth});
-        const parentFolder = rq.header('parent-folder');
-
-        let form = new multiparty.Form();
-        form.parse(rq, async (err, fields, files) => {
-            if(err){ 
-                rs.json({
-                    status: 400,
-                    message: 'Ha ocurrido un error al cargar el archivo',
-                    response: err
-                }); 
-            }
-
-            if(files.archivo) {
-
-                const archivo = files.archivo;
-                const response = await uploadFile(drive, archivo[0], parentFolder);
-
-                rs.json({
-                    status: response.status,
-                    message: response.statusText,
-                    response: response.data
-                });
-
-            } else {
-                rs.json({
-                    status: 404,
-                    message: 'No hay archivos para subir a Drive!',
-                    response: err
-                });
-            }
-
-        });
-    }
-
     public async downloadFile(rq: Request, rs: Response) {
-        const auth = authenticationService.getOAuth2Client(rq);
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
         const drive = google.drive({version: 'v3', auth});
         
         try {
@@ -147,6 +125,43 @@ class DriveController {
         }
     }
 
+    public async uploadFileToDrive(rq: Request, rs: Response) {
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
+        const accessTokenObj = await auth.getAccessToken();
+        
+        const parentFolder = rq.header('parent-folder');
+
+        const form = new multiparty.Form();
+        form.parse(rq, async (err, fields, files) => {
+            if (err) {
+                return rs.status(409).json(err).end();
+            }
+
+            if (!files.archivo) {
+                return rs.status(204).json({message: 'Seleccione un archivo'}).end();
+            }
+
+            const file = files.archivo[0];
+            console.log('[FILE TO UPLOAD]', file);
+            const response = await getResumibleSession(accessTokenObj.token, file, parentFolder);
+            const upload = await uploadFileToResumibleSession(response.location, accessTokenObj.token, file);
+            // console.log('[UPLOAD]', upload);
+            const result = {
+                status:     upload.status,
+                data: {
+                    session: response.location,
+                    id:      upload.data.id,
+                    name:    upload.data.name
+                }
+            };
+
+            return rs.status(result.status).json(result).end();
+        });
+
+    }
 }
 
 const driveController = new DriveController();

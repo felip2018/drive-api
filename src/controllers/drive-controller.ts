@@ -39,7 +39,7 @@ class DriveController {
     public async getAllFiles(rq: Request, rs: Response) {
         const sec = await secretsController.getSecrets();
         const secrets = JSON.parse(sec.SecretString);
-
+        console.log('[SECRETS]', secrets);
         const auth = authenticationService.getOAuth2Client(secrets);
         const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');

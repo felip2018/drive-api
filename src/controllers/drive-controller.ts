@@ -145,11 +145,20 @@ class DriveController {
             }
 
             const file = files.archivo[0];
-
+            console.log('[FILE TO UPLOAD]', file);
             const response = await getResumibleSession(accessTokenObj.token, file, parentFolder);
-
             const upload = await uploadFileToResumibleSession(response.location, accessTokenObj.token, file);
+            // console.log('[UPLOAD]', upload);
+            const result = {
+                status:     upload.status,
+                data: {
+                    session: response.location,
+                    id:      upload.data.id,
+                    name:    upload.data.name
+                }
+            };
 
+            return rs.status(result.status).json(result).end();
         });
 
     }

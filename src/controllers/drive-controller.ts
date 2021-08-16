@@ -126,6 +126,7 @@ class DriveController {
     }
 
     public async uploadFileToDrive(rq: Request, rs: Response) {
+        console.log('Upload File...');
         const sec = await secretsController.getSecrets();
         const secrets = JSON.parse(sec.SecretString);
 

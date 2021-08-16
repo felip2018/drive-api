@@ -5,8 +5,8 @@ class SecretsController{
         return new Promise((resolve, reject) => {
 
             try {
-                const REGION = process.env.REGION;
-                const SECRET_NAME = process.env.SECRET_NAME;
+                const REGION = 'us-east-1';
+                const SECRET_NAME = 'GOOGLE_DRIVE_SECRETS_QA';
                 console.log(`REGION: (${REGION}) SECRET_NAME: (${SECRET_NAME})`);
                 const client = new AWS.SecretsManager({
                     region: REGION

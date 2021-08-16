@@ -7,7 +7,7 @@ class SecretsController{
             try {
                 const REGION = process.env.REGION;
                 const SECRET_NAME = process.env.SECRET_NAME;
-
+                console.log(`REGION: (${REGION}) SECRET_NAME: (${SECRET_NAME})`);
                 const client = new AWS.SecretsManager({
                     region: REGION
                 });

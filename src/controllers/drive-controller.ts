@@ -147,7 +147,7 @@ class DriveController {
             const file = files.archivo[0];
 
             let searchFolder = await searchFolderService(auth, parentFolder, folderName);
-            console.log('SEARCH FOLDER', searchFolder);
+            
             if (!searchFolder) {
                 searchFolder = await createFolderService(auth, parentFolder, folderName);
             }

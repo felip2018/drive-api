@@ -2,14 +2,13 @@ import { Request, Response } from 'express';
 import { google } from 'googleapis';
 import fs from 'fs';
 import authenticationService from '../services/authentication';
-import { getResumibleSession, uploadFileToResumibleSession } from '../services/drive';
+import { createFolderService, getAllFilesService, getResumibleSession, searchFolderService, uploadFileToResumibleSession } from '../services/drive';
 import multiparty from 'multiparty';
 import secretsController from './secrets-controller';
 
 class DriveController {
     
     public async getRootFolderData(rq: Request, rs: Response) {
-
         const sec = await secretsController.getSecrets();
         const secrets = JSON.parse(sec.SecretString);
 
@@ -39,60 +38,60 @@ class DriveController {
     public async getAllFiles(rq: Request, rs: Response) {
         const sec = await secretsController.getSecrets();
         const secrets = JSON.parse(sec.SecretString);
-        console.log('[SECRETS]', secrets);
         const auth = authenticationService.getOAuth2Client(secrets);
-        const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');
-        drive.files.list({
-            fields: 'nextPageToken, files(id, name, mimeType, trashed, parents)',
-            q: `'${parentFolder}' in parents`
-        }, (err, resp) => {
-            if (err) {
-                rs.json({
-                    status: 400,
-                    response: err,
-                    message: 'Ha ocurrido un error al intentar consultar los elementos de Drive!'
-                });
-            } else {
-                const obj = (resp !== null) ? resp.data.files : '';
-                rs.json({
-                    status: 200,
-                    response: obj,
-                    message: 'Se ha obtenido el listado de items'
-                });
-            }
-        });
+        try {
+            const response = await getAllFilesService(auth, parentFolder);
+            rs.json({
+                status: 200,
+                response
+            }).end();
+        } catch (error) {
+            rs.json({
+                status: 500,
+                error
+            }).end();
+        }
+    }
+
+    public async searchFolder(rq: Request, rs: Response) {
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+        const auth = authenticationService.getOAuth2Client(secrets);
+        const parentFolder = rq.header('parent-folder');
+        const folderName = rq.header('folder-name');
+        try {
+            const response = await searchFolderService(auth, parentFolder, folderName);
+            rs.json({
+                status: 200,
+                response
+            }).end();
+        } catch (error) {
+            rs.json({
+                status: 500,
+                error
+            }).end();
+        }
     }
 
     public async createFolder(rq: Request, rs: Response) {
         const sec = await secretsController.getSecrets();
         const secrets = JSON.parse(sec.SecretString);
-
         const auth = authenticationService.getOAuth2Client(secrets);
-        const drive = google.drive({version: 'v3', auth});
         const parentFolder = rq.header('parent-folder');
         const folderName = rq.header('folder-name');
-        drive.files.create({
-            fields: 'id',
-            requestBody: {
-                name: folderName,
-                mimeType: 'application/vnd.google-apps.folder',
-                parents:[parentFolder]
-            }
-        }).then((file) => {
-            console.log('Folder Id: ', file.data.id);
+        try {
+            const response = await createFolderService(auth, folderName, parentFolder);
             rs.json({
                 status: 200,
-                message: 'La carpeta ha sido creada!',
-                response: file.data
-            });
-        }).catch((err) => {
+                response
+            }).end();
+        } catch (error) {
             rs.json({
-                status: 400,
-                message: 'Ha ocurrido un error al crear la carpeta',
-                response: err
-            });
-        });
+                status: 500,
+                error
+            }).end();
+        }
     }
 
     public async downloadFile(rq: Request, rs: Response) {
@@ -126,14 +125,14 @@ class DriveController {
     }
 
     public async uploadFileToDrive(rq: Request, rs: Response) {
-        console.log('Upload File...');
         const sec = await secretsController.getSecrets();
         const secrets = JSON.parse(sec.SecretString);
 
         const auth = authenticationService.getOAuth2Client(secrets);
         const accessTokenObj = await auth.getAccessToken();
         
-        const parentFolder = rq.header('parent-folder');
+        const parentFolder  = rq.header('parent-folder');
+        const folderName    = rq.header('search-folder');
 
         const form = new multiparty.Form();
         form.parse(rq, async (err, fields, files) => {
@@ -146,10 +145,15 @@ class DriveController {
             }
 
             const file = files.archivo[0];
-            console.log('[FILE TO UPLOAD]', file);
-            const response = await getResumibleSession(accessTokenObj.token, file, parentFolder);
+
+            let searchFolder = await searchFolderService(auth, parentFolder, folderName);
+            console.log('SEARCH FOLDER', searchFolder);
+            if (!searchFolder) {
+                searchFolder = await createFolderService(auth, parentFolder, folderName);
+            }
+
+            const response = await getResumibleSession(accessTokenObj.token, file, searchFolder.id);
             const upload = await uploadFileToResumibleSession(response.location, accessTokenObj.token, file);
-            // console.log('[UPLOAD]', upload);
             const result = {
                 status:     upload.status,
                 data: {

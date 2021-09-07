@@ -14,6 +14,7 @@ class QueryRouter {
         this.router.post('/create-folder', driveController.createFolder);
         this.router.post('/download-file', driveController.downloadFile);
         this.router.put('/upload-file-to-drive', driveController.uploadFileToDrive);
+        this.router.get('/search-folder', driveController.searchFolder);
     }
 }
 

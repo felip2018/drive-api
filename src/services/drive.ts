@@ -1,30 +1,8 @@
 import fs from 'fs';
 import axios from 'axios';
+import { google } from 'googleapis';
 
-function uploadFile(drive: any, file: any, parent: string): Promise<any> {
-    return new Promise(async (resolve, reject) => {
-        try {
-            let media = {
-                mimeType: file.headers["content-type"],
-                body: fs.createReadStream(file.path)
-            };
-            let response = await drive.files.create({
-                requestBody: {
-                    name: file.originalFilename,
-                    parents: [parent]
-                },
-                media: media,
-                fields: 'id, name',
-            });
-            return resolve(response);
-        } catch (error) {
-            console.log('[Error uploadFile]', error);
-            return reject(error);
-        }    
-    });
-}
-
-function getResumibleSession(token: string, file: any, parentFolder: string): Promise<any>{
+const getResumibleSession = (token: string, file: any, parentFolder: string): Promise<any> => {
     return new Promise(async (resolve, reject) => {
         try {
             const body = {
@@ -49,7 +27,7 @@ function getResumibleSession(token: string, file: any, parentFolder: string): Pr
     });
 }
 
-function uploadFileToResumibleSession(resumibleSession: string, token: string, file: any): Promise<any> {
+const uploadFileToResumibleSession = (resumibleSession: string, token: string, file: any): Promise<any> => {
     return new Promise(async (resolve, reject) => {
         try {
             const response = await axios.put(resumibleSession, fs.createReadStream(file.path), {
@@ -60,15 +38,66 @@ function uploadFileToResumibleSession(resumibleSession: string, token: string, f
                 maxContentLength: Infinity,
                 maxBodyLength: Infinity,
             })
-            return resolve(response);
+            resolve(response);
         } catch (error) {
             console.log('[ERROR - uploadFileToResumibleSession]', error);
         }
     });
 }
 
+
+const getAllFilesService = (auth: any, parentFolder: string) => {
+    return new Promise(async (resolve, reject) => {
+        const drive = google.drive({version: 'v3', auth});
+        drive.files.list({
+            fields: 'nextPageToken, files(id, name, mimeType, trashed, parents)',
+            q: `'${parentFolder}' in parents`
+        })
+        .then(res => resolve(res))
+        .catch(err => reject(err))
+    });
+}
+
+const createFolderService = (auth: any,  parentFolder: string, folderName: string): Promise<any> => {
+    return new Promise(async (resolve, reject) => {
+        const drive = google.drive({version: 'v3', auth});
+        drive.files.create({
+            fields: 'id',
+            requestBody: {
+                name: folderName,
+                mimeType: 'application/vnd.google-apps.folder',
+                parents:[parentFolder]
+            }
+        }).then((response) => {
+            resolve(response.data);
+        }).catch((err) => {
+            reject(err);
+        });
+    });
+}
+
+const searchFolderService = (auth: any, parentFolder: string, folderName: string): Promise<any> => {
+    return new Promise(async (resolve, reject) => {
+        const drive = google.drive({version: 'v3', auth});
+        drive.files.list({
+            fields: 'nextPageToken, files(id, name, mimeType, trashed, parents)',
+            q: `'${parentFolder}' in parents`
+        })
+        .then((res) => {
+            const filtered = res.data.files.filter((element) => {
+                return element.name === folderName;
+            });
+            
+            resolve(filtered.length > 0 ? filtered[0] : null)
+        })
+        .catch(err => reject(err))
+    });
+}
+
 export {
-    uploadFile,
+    createFolderService,
+    getAllFilesService,
+    searchFolderService,
     getResumibleSession,
     uploadFileToResumibleSession
 };

@@ -119,8 +119,7 @@ class DriveController {
             rs.status(200).json(result.data).end();
     
         } catch (error) {
-            console.log(error.message);
-            rs.status(error.status).json(error).end();
+            rs.status(409).json(error).end();
         }
     }
 
@@ -166,6 +165,60 @@ class DriveController {
             return rs.status(result.status).json(result).end();
         });
 
+    }
+
+    public async uploadGroupValidationEvidence(rq: Request, rs: Response) {
+        const sec = await secretsController.getSecrets();
+        const secrets = JSON.parse(sec.SecretString);
+
+        const auth = authenticationService.getOAuth2Client(secrets);
+        const accessTokenObj = await auth.getAccessToken();
+        
+        const parentFolder  = rq.header('parent-folder');
+        const formationName = rq.header('formation-name');
+        const groupName     = rq.header('group-name');
+
+        const form = new multiparty.Form();
+        form.parse(rq, async (err, fields, files) => {
+            if (err) {
+                return rs.status(409).json(err).end();
+            }
+
+            if (!files.archivo) {
+                return rs.status(204).json({message: 'Seleccione un archivo'}).end();
+            }
+
+            // Consultar carpeta de accion de formacion
+            let formationFolder = await searchFolderService(auth, parentFolder, formationName);
+            if (!formationFolder) {
+                formationFolder = await createFolderService(auth, parentFolder, formationName);
+            }
+
+            // Consultar carpeta de grupo de formacion
+            let groupFolder = await searchFolderService(auth, formationFolder.id, groupName);
+            if (!groupFolder) {
+                groupFolder = await createFolderService(auth, formationFolder.id, groupName);
+            }
+
+            let arrayRes = [];
+
+            for(const item of files.archivo) {
+                
+                const response = await getResumibleSession(accessTokenObj.token, item, groupFolder.id);
+                const upload = await uploadFileToResumibleSession(response.location, accessTokenObj.token, item);
+                
+                arrayRes.push({
+                    status:     upload.status,
+                    data: {
+                        session: response.location,
+                        id:      upload.data.id,
+                        name:    upload.data.name
+                    }
+                });
+                
+            }
+            return rs.status(200).json(arrayRes).end();
+        });
     }
 }
 

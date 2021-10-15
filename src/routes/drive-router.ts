@@ -15,6 +15,7 @@ class QueryRouter {
         this.router.post('/download-file', driveController.downloadFile);
         this.router.put('/upload-file-to-drive', driveController.uploadFileToDrive);
         this.router.get('/search-folder', driveController.searchFolder);
+        this.router.put('/upload-group-validation-evidence', driveController.uploadGroupValidationEvidence);
     }
 }
 

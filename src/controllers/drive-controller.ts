@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { google } from 'googleapis';
 import fs from 'fs';
 import authenticationService from '../services/authentication';
-import { createFolderService, getAllFilesService, getResumibleSession, searchFolderService, uploadFileToResumibleSession } from '../services/drive';
+import { createFolderService, downloadFileService, getAllFilesService, getResumibleSession, searchFolderService, uploadFileToResumibleSession } from '../services/drive';
 import multiparty from 'multiparty';
 import secretsController from './secrets-controller';
 
@@ -200,24 +200,14 @@ class DriveController {
                 groupFolder = await createFolderService(auth, formationFolder.id, groupName);
             }
 
-            let arrayRes = [];
-
             for(const item of files.archivo) {
-                
                 const response = await getResumibleSession(accessTokenObj.token, item, groupFolder.id);
-                const upload = await uploadFileToResumibleSession(response.location, accessTokenObj.token, item);
-                
-                arrayRes.push({
-                    status:     upload.status,
-                    data: {
-                        session: response.location,
-                        id:      upload.data.id,
-                        name:    upload.data.name
-                    }
-                });
-                
+                await uploadFileToResumibleSession(response.location, accessTokenObj.token, item); 
             }
-            return rs.status(200).json(arrayRes).end();
+
+            const result = await downloadFileService(auth, groupFolder.id);
+
+            rs.status(200).json(result.data).end();
         });
     }
 }

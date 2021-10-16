@@ -58,6 +58,26 @@ const getAllFilesService = (auth: any, parentFolder: string) => {
     });
 }
 
+const downloadFileService = (auth: any, objectId: string): Promise<any> => {
+    return new Promise(async (resolve, reject) => {
+        const drive = google.drive({version: 'v3', auth});
+        await drive.permissions.create({
+            fileId: objectId,
+            requestBody: {
+                role: 'reader',
+                type: 'anyone'
+            }
+        });
+
+        const result = await drive.files.get({
+            fileId: objectId,
+            fields: 'webViewLink, webContentLink'
+        })
+        .then(res => resolve(res))
+        .catch(err => reject(err))
+    })
+}
+
 const createFolderService = (auth: any,  parentFolder: string, folderName: string): Promise<any> => {
     return new Promise(async (resolve, reject) => {
         const drive = google.drive({version: 'v3', auth});
@@ -99,5 +119,6 @@ export {
     getAllFilesService,
     searchFolderService,
     getResumibleSession,
-    uploadFileToResumibleSession
+    uploadFileToResumibleSession,
+    downloadFileService
 };

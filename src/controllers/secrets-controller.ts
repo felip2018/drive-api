@@ -3,15 +3,12 @@ import AWS from 'aws-sdk';
 class SecretsController{
     public async getSecrets(): Promise<any> {
         return new Promise((resolve, reject) => {
-
             try {
                 const REGION = process.env.REGION;
                 const SECRET_NAME = process.env.SECRET_NAME;
-                console.log(`REGION: (${REGION}) SECRET_NAME: (${SECRET_NAME})`);
                 const client = new AWS.SecretsManager({
                     region: REGION
                 });
-
                 client.getSecretValue({SecretId: SECRET_NAME}, (err, data) => {
                     if(err) {
                         throw err;
